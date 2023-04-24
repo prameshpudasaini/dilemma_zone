@@ -34,7 +34,7 @@ from_time = datetime(2022, 12, 6, 7, 45)
 to_time = datetime(2022, 12, 6, 8, 15)
 ndf = df[(df.TimeStamp >= from_time) & (df.TimeStamp <= to_time)]
 
-ndf.to_csv(r"D:\GitHub\match_events\data\20221206_ISR_19Ave\data_process.txt", sep = '\t', index = False)
+# ndf.to_csv(r"D:\GitHub\match_events\data\20221206_ISR_19Ave\data_process.txt", sep = '\t', index = False)
 
 # detection count by lane
 sdf = ndf.copy(deep = True)

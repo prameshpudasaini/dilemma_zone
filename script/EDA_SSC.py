@@ -24,18 +24,21 @@ ssc_color = {'YY': 'orange',
              'GR': 'navy'}
 
 # individual detector
-px.scatter(
+fig = px.scatter(
     df, x = 'TimeStamp', y = 'Parameter',
     color = 'SSC',
     category_orders = cat_order,
     color_discrete_map = ssc_color
-).update_traces(marker = dict(size = 10)).show()
+).update_traces(marker = dict(size = 10))
 
-# lane-by-lane
-px.scatter(
-    df, x = 'TimeStamp', y = 'Lane',
-    color = 'SSC',
-    symbol = 'Det',
-    category_orders = cat_order,
-    color_discrete_map = ssc_color
-).update_traces(marker = dict(size = 8)).show()
+fig.show()
+fig.write_html(r"D:\GitHub\match_events\output\20221206_ISR_19Ave_EDA_SSC.html")
+
+# # lane-by-lane
+# px.scatter(
+#     df, x = 'TimeStamp', y = 'Lane',
+#     color = 'SSC',
+#     symbol = 'Det',
+#     category_orders = cat_order,
+#     color_discrete_map = ssc_color
+# ).update_traces(marker = dict(size = 8)).show()
