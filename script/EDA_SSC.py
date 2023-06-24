@@ -9,6 +9,7 @@ df = pd.read_csv(path, sep = '\t')
 
 df.TimeStamp = pd.to_datetime(df.TimeStamp, format = '%Y-%m-%d %H:%M:%S.%f').sort_values()
 df.Parameter = df.Parameter.astype(str)
+df['ID'] = df.index + 1000
 
 # plot detection points for subset
 det_order = [9, 27, 10, 28, 11, 29, 6, 5]
@@ -27,12 +28,13 @@ ssc_color = {'YY': 'orange',
 fig = px.scatter(
     df, x = 'TimeStamp', y = 'Parameter',
     color = 'SSC',
+    hover_name = 'ID',
     category_orders = cat_order,
     color_discrete_map = ssc_color
 ).update_traces(marker = dict(size = 10))
 
 fig.show()
-fig.write_html(r"D:\GitHub\match_events\output\20221206_ISR_19Ave_EDA_SSC.html")
+# fig.write_html(r"D:\GitHub\match_events\output\20221206_ISR_19Ave_EDA_SSC.html")
 
 # # lane-by-lane
 # px.scatter(
