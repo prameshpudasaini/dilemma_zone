@@ -1,5 +1,10 @@
 import os
 import pandas as pd
+from statistics import mean, median
+
+import plotly.express as px
+import plotly.io as pio
+pio.renderers.default = 'browser'
 
 os.chdir(r"D:\GitHub\match_events")
 
@@ -37,8 +42,10 @@ det = {'adv': (27, 28, 29),
        'rear': 6}
 
 # lane position
-lane = {'adv': {27: 'R', 28: 'M', 29: 'L'},
-        'stop': {9: 'R', 10: 'M', 11: 'L'}}
+# lane = {'adv': {27: 'R', 28: 'M', 29: 'L'},
+#         'stop': {9: 'R', 10: 'M', 11: 'L'}}
+lane = {'adv': {27: 0, 28: 1, 29: 2},
+        'stop': {9: 0, 10: 1, 11: 2}}
 
 # =============================================================================
 # process phase change events
@@ -46,7 +53,7 @@ lane = {'adv': {27: 'R', 28: 'M', 29: 'L'},
 
 def processPhaseChanges(phase_dirc):
     # phase change events data frame
-    pdf = df.copy(deep = True) 
+    pdf = df.copy(deep = True)
     
     # filter phase direction and phase events
     pdf = pdf[(pdf.Parameter == phase[phase_dirc]) & (pdf.EventID.isin(list(pse.values())))]
@@ -103,7 +110,7 @@ def processDetectorActuations(phase_dirc):
     else:
         det_set = (det['front'], det['rear'])
         ddf = ddf[ddf.Parameter.isin(det_set)]
-        ddf['Lane'] = 'LT'
+        ddf['Lane'] = -1 # left-turn lane
         ddf.loc[ddf.Parameter == det['front'], 'Det'] = 'front'
         ddf.loc[ddf.Parameter == det['rear'], 'Det'] = 'rear'
     
@@ -114,7 +121,7 @@ def processDetectorActuations(phase_dirc):
 # =============================================================================
 
 # signal status change and first on and last off (FOLO) over a detector
-def SSC_FOLO(merge_df, det_num):
+def processSignalStatusChange(merge_df, det_num):
     print("Checking signal status change for detector: ", det_num)
     ldf = merge_df.copy(deep = True) # lane-based actuations events df
     ldf = ldf[ldf.Parameter == det_num] # filter for detector number
@@ -212,7 +219,7 @@ def processMergedEvents(phase_dirc):
     
     # signal status change for each detector
     for det_num in det_set:
-        ssc_folo = SSC_FOLO(mdf, det_num)
+        ssc_folo = processSignalStatusChange(mdf, det_num)
         
         timestamp_limit = (mdf.TimeStamp >= ssc_folo['dof']) & (mdf.TimeStamp <= ssc_folo['dol'])
         mdf.loc[(mdf.EventID == on) & (mdf.Parameter == det_num) & timestamp_limit, 'SSC'] = ssc_folo['SSC']
@@ -233,3 +240,178 @@ mdf = pd.concat([mdf_thru, mdf_left]).sort_values(by = 'TimeStamp')
 mdf.reset_index(drop = True, inplace = True)
 
 # mdf.to_csv(r"D:\GitHub\match_events\data\20221206_ISR_19Ave\data_SSC.txt", sep = '\t', index = False)
+
+# =============================================================================
+# visualize actuation and signal status change
+# =============================================================================
+
+# actuation ID
+mdf['ID'] = mdf.index + 1000 # adv det IDs start with 1
+mdf.loc[mdf.Det == 'stop', 'ID'] = mdf.ID + 1000 # stop-bar det IDs start with 2
+mdf.loc[mdf.Lane == 'LT', 'ID'] = mdf.ID + 2000 # left-turn det IDs start with 3
+
+# plot detection points for subset
+det_order = [9, 27, 10, 28, 11, 29, 6, 5]
+cat_order = {'SSC': ['YY', 'YR', 'RR', 'RG', 'GG', 'GY', 'GR'],
+             'Parameter': det_order,
+             'Lane': ['R', 'M', 'L', 'LT']}
+ssc_color = {'YY': 'orange',
+             'YR': 'brown',
+             'RR': 'red',
+             'RG': 'black',
+             'GG': 'green',
+             'GY': 'limegreen',
+             'GR': 'navy'}
+
+def plotActuationSSC(xdf):
+    fig = px.scatter(
+        xdf, x = 'TimeStamp', y = 'Parameter',
+        color = 'SSC',
+        hover_name = 'ID',
+        hover_data = ['AIC', 'TUY'],
+        category_orders = cat_order,
+        color_discrete_map = ssc_color
+    ).update_traces(marker = dict(size = 10))
+    
+    fig.show()
+    
+plotActuationSSC(mdf)
+
+# =============================================================================
+# filter actuation at onset of yellow
+# =============================================================================
+
+# check AIC of actuation with SSC = RG
+temp = mdf.copy(deep = True)
+temp = temp[(temp.Lane != 'LT') & (temp.SSC == 'RG')][['TimeStamp', 'Cycle', 'SSC', 'AIC', 'ID']]
+
+# start times
+yellowStart = processPhaseChanges('thru')['StartTime']['Y']
+greenStart = processPhaseChanges('thru')['StartTime']['G']
+
+# # test filter
+# fdf = mdf.copy(deep = True)
+# fdf = fdf[(fdf.AIC <= 15) | (fdf.TUY <= 10)]
+# plotActuationSSC(fdf)
+
+# filter actuation at adv det susceptible to dilemma zone
+tdf = mdf.copy(deep = True)
+
+crit_TUY_adv = 7 # critical TUY at adv det of YLR, RLR actuation over stop-bar det
+crit_AIC_adv = 3.6 # critical AIC at adv det = length of yellow interval
+
+df_crit_adv = tdf[(tdf.Det == 'adv') & ((tdf.TUY <= crit_TUY_adv) | (tdf.AIC <= crit_AIC_adv))]
+id_adv = set(df_crit_adv.ID)
+
+# filter potential set of corresponding matches at stop-bar
+crit_AIC_stop = 15
+df_crit_stop = tdf[(tdf.Det == 'stop') & ((tdf.AIC <= crit_AIC_stop) | (tdf.TUY == 0))]
+id_stop = set(df_crit_stop.ID)
+
+# union set of ids
+id_adv_stop = sorted(set.union(id_adv, id_stop))
+
+# filtered df
+fdf = tdf[(tdf.Lane == -1) | (tdf.ID.isin(id_adv_stop))]
+plotActuationSSC(fdf)
+
+# =============================================================================
+# match events
+# =============================================================================
+
+# data frames for adv, stop, left-turn
+adf = mdf[mdf.Det == 'adv']
+sdf = mdf[mdf.Det == 'stop']
+ldf = mdf[mdf.Lane == 'LT']
+
+# test
+def traveltime(x, y):
+    adv_on = adf[adf.ID == x].TimeStamp
+    stop_on = sdf[sdf.ID == y].TimeStamp
+    return (Vector(stop_on) - Vector(adv_on)).pop()
+
+tt_stop = [traveltime(1003, 2005),
+           traveltime(1097, 2099),
+           traveltime(1164, 2167),
+           traveltime(1587, 2592),
+           traveltime(1661, 2662),
+           traveltime(1722, 2724),
+           traveltime(1448, 2453),
+           traveltime(1543, 2544),
+           traveltime(1588, 2594)]
+
+tt_run = [traveltime(1161, 2163),
+          traveltime(1225, 2226),
+          traveltime(1585, 2590),
+          traveltime(1162, 2165),
+          traveltime(1584, 2589)]
+
+# speed conversion: mph to fps
+def speedConvert(x):
+    return round(x*5280/3600, 1)
+
+# intersection parameters
+len_stop = 40
+len_adv = 5
+dist_det = 300
+dist_adv_stop = dist_det - len_stop
+
+# speed parameters
+speed_limit = speedConvert(35)
+speed_max = speedConvert(50)
+
+# travel time
+tt_ideal = round(dist_adv_stop / speed_limit, 1)
+tt_min = round(dist_adv_stop / speed_max, 1)
+
+dec = round((speed_limit**2) / (2*dist_det), 1) # v2 = u2 + 2as to find deceleration for stopping
+tt_max = round(speed_limit / dec, 1)
+
+# ideal travel time for stop and run
+tt_ideal_stop = median(tt_stop)
+tt_ideal_run = median(tt_run)
+
+# match events for all actuations over adv det
+match = {}
+for i in sorted(id_adv):
+    adv_on = adf[adf.ID == i].TimeStamp
+    adv_lane = adf[adf.ID == i].Lane.values[0].astype(int)
+    adv_ssc = adf[adf.ID == i].SSC.values[0]
+
+    candidate = {}
+    for j in sorted(id_stop):
+        stop_on = sdf[sdf.ID == j].TimeStamp
+        stop_lane = sdf[sdf.ID == j].Lane.values[0].astype(int)
+        stop_ssc = sdf[sdf.ID == j].SSC.values[0]
+        
+        diff_tt = (Vector(stop_on) - Vector(adv_on)).pop() # travel time from adv to stop-bar
+        diff_lane = abs(stop_lane - adv_lane) # integer value for num of lanes changed
+        
+        if diff_tt < 0 or diff_lane > 1:
+            pass
+        else:
+            if (diff_tt < tt_min or diff_tt > tt_max):
+                pass
+            else:
+                if stop_ssc == 'RG': # if veh stops at stop bar
+                    match_diff = abs(diff_tt - tt_ideal_stop)
+                else: # if veh runs thru stop bar
+                    match_diff = abs(diff_tt - tt_ideal_run)
+                
+                if match_diff == 0: # for zero division error
+                    match_diff = 0.1
+                
+                match_strength = round(1/match_diff, 2)
+                
+                if diff_lane == 0:
+                    change = 0
+                else:
+                    change = 1
+                    
+                candidate[j] = list([match_strength, change])
+    
+    print(i, ":", candidate)
+    
+    if len(candidate) != 0: # check candidate dict is not empty
+        match[i] = candidate
+            
