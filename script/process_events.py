@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from statistics import mean, median
+import numpy as np
 
 import plotly.express as px
 import plotly.io as pio
@@ -16,9 +16,16 @@ class Vector():
     def __sub__(self, other):
         return list((a-b).total_seconds() for a, b in zip(self.data, other.data))
 
-df = pd.read_csv("data/20221206_ISR_19Ave/data_process.txt", sep = '\t')
+# select period and file
+def getFileName(year, month, day, from_hour, from_min, to_hour, to_min):
+    return(str(year) + str(month).zfill(2) + str(day).zfill(2) + '_' +
+           str(from_hour).zfill(2) + str(from_min).zfill(2) + '_' +
+           str(to_hour).zfill(2) + str(to_min).zfill(2))
 
-# convert datetime
+file = getFileName(2023, 3, 27, 14, 15, 18, 45)
+
+# read file, convert timestamp
+df = pd.read_csv(os.path.join("ignore\data", file + '.txt'), sep = '\t')
 df.TimeStamp = pd.to_datetime(df.TimeStamp, format = '%Y-%m-%d %H:%M:%S.%f').sort_values()
 
 # =============================================================================
@@ -28,7 +35,7 @@ df.TimeStamp = pd.to_datetime(df.TimeStamp, format = '%Y-%m-%d %H:%M:%S.%f').sor
 # phase config
 phase = {'thru': 2, 'left': 5}
 
-# phase change (start, end) events
+# phase change events (s = start, e = end)
 pse = {'Gs': 1, 'Ge': 7,
        'Ys': 8, 'Ye': 9,
        'Rs': 10, 'Re': 11}
@@ -58,32 +65,45 @@ def processPhaseChanges(phase_dirc):
     # filter phase direction and phase events
     pdf = pdf[(pdf.Parameter == phase[phase_dirc]) & (pdf.EventID.isin(list(pse.values())))]
     
-    # compute cycle time assuming cycle starts on yellow
-    CycleTime = {'min': min((pdf.loc[pdf.EventID == pse['Ge']]).TimeStamp),
-                 'max': max((pdf.loc[pdf.EventID == pse['Ge']]).TimeStamp)}
+    # compute cycle time range assuming cycle starts on yellow
+    cycle_range = {'min': min((pdf.loc[pdf.EventID == pse['Ge']]).TimeStamp),
+                   'max': max((pdf.loc[pdf.EventID == pse['Ge']]).TimeStamp)}
     
-    pdf = pdf[(pdf.TimeStamp >= CycleTime['min']) & (pdf.TimeStamp <= CycleTime['max'])]
+    pdf = pdf[(pdf.TimeStamp >= cycle_range['min']) & (pdf.TimeStamp <= cycle_range['max'])]
     pdf = pdf[pdf.EventID.isin((pse['Ys'], pse['Rs'], pse['Gs']))]
     
     # indication start times: yellow, red, green
-    StartTime = {'Y': tuple((pdf.loc[pdf.EventID == pse['Ys']]).TimeStamp),
-                 'R': tuple((pdf.loc[pdf.EventID == pse['Rs']]).TimeStamp),
-                 'G': tuple((pdf.loc[pdf.EventID == pse['Gs']]).TimeStamp)}
+    start_time = {'Y': tuple((pdf.loc[pdf.EventID == pse['Ys']]).TimeStamp),
+                  'R': tuple((pdf.loc[pdf.EventID == pse['Rs']]).TimeStamp),
+                  'G': tuple((pdf.loc[pdf.EventID == pse['Gs']]).TimeStamp)}
     
     # indication time intervals: yellow, red, green
-    interval = {'Y': Vector(StartTime['R']) - Vector(StartTime['Y'][:-1]),
-                'R': Vector(StartTime['G']) - Vector(StartTime['R']),
-                'G': Vector(StartTime['Y'][1:]) - Vector(StartTime['G'])}
+    interval = {'Y': Vector(start_time['R']) - Vector(start_time['Y'][:-1]),
+                'R': Vector(start_time['G']) - Vector(start_time['R']),
+                'G': Vector(start_time['Y'][1:]) - Vector(start_time['G'])}
     
     # cycle number and length
-    cycle = {'num': tuple(range(1, len(StartTime['Y']))),
-             'len': Vector(StartTime['Y'][1:]) - Vector(StartTime['Y'][:-1])}
+    cycle_index = {'num': tuple(range(1, len(start_time['Y']))),
+                   'length': Vector(start_time['Y'][1:]) - Vector(start_time['Y'][:-1])}
     
-    return {'pdf': pdf, 
-            'CycleTime': CycleTime, 
-            'StartTime': StartTime, 
-            'interval': interval, 
-            'cycle': cycle}
+    cycle = {
+        'CycleNum': cycle_index['num'],
+        'CycleLength': cycle_index['length'],
+        'YST': start_time['Y'][:-1], # current cycle
+        'RST': start_time['R'],
+        'GST': start_time['G'],
+        'YST_NC': start_time['Y'][1:], # next cycle
+        'YellowTime': interval['Y'],
+        'RedTime': interval['R'],
+        'GreenTime': interval['G']
+    }
+    
+    cdf = pd.DataFrame(cycle)
+    
+    return {'pdf': pdf, # phase data frame
+            'cdf': cdf, # cycle data frame
+            'start_time': start_time,
+            'cycle_range': cycle_range}
 
 # =============================================================================
 # process detector actuation events
@@ -96,9 +116,9 @@ def processDetectorActuations(phase_dirc):
     # filter detection on/off events
     ddf = ddf[ddf.EventID.isin([on, off])]
     
-    # filter detection events within cycle min-max time
-    CycleTime = processPhaseChanges(phase_dirc)['CycleTime']
-    ddf = ddf[(ddf.TimeStamp > CycleTime['min']) & (ddf.TimeStamp < CycleTime['max'])]
+    # filter detection events within cycle min-max time (exclude bounds)
+    cycle_range = processPhaseChanges(phase_dirc)['cycle_range']
+    ddf = ddf[(ddf.TimeStamp > cycle_range['min']) & (ddf.TimeStamp < cycle_range['max'])]
     
     # filter detector number; add lane position and detector type
     if phase_dirc == 'thru':
@@ -114,16 +134,17 @@ def processDetectorActuations(phase_dirc):
         ddf.loc[ddf.Parameter == det['front'], 'Det'] = 'front'
         ddf.loc[ddf.Parameter == det['rear'], 'Det'] = 'rear'
     
-    return {'ddf': ddf, 'det_set': det_set}
+    return {'ddf': ddf, 
+            'det_set': det_set}
 
 # =============================================================================
-# process signal status change
+# process signal status change and OHG parameters
 # =============================================================================
 
 # signal status change and first on and last off (FOLO) over a detector
-def processSignalStatusChange(merge_df, det_num):
+def processSignalStatusChange(xdf, det_num):
     print("Checking signal status change for detector: ", det_num)
-    ldf = merge_df.copy(deep = True) # lane-based actuations events df
+    ldf = xdf.copy(deep = True) # lane-based actuations events df
     ldf = ldf[ldf.Parameter == det_num] # filter for detector number
     
     # timestamps of detector on and off
@@ -144,12 +165,37 @@ def processSignalStatusChange(merge_df, det_num):
     else:
         print("Pass!")
         # get signal status for detector on and off
-        detOn = tuple((ldf.loc[(ldf.EventID == on) & (ldf.Parameter == det_num)]).Signal)
-        detOff = tuple((ldf.loc[(ldf.EventID == off) & (ldf.Parameter == det_num)]).Signal)
+        detOnSignal = tuple((ldf.loc[ldf.EventID == on]).Signal)
+        detOffSignal = tuple((ldf.loc[ldf.EventID == off]).Signal)
+        
+        # filtered timestamps of detector on and off
+        detOnTime = tuple((ldf.loc[ldf.EventID == on]).TimeStamp)
+        detOffTime = tuple((ldf.loc[ldf.EventID == off]).TimeStamp)
+        
+        # compute on-detector time
+        OccTime = np.array(Vector(detOffTime) - Vector(detOnTime))
+        
+        # compute leading and following headway
+        Headway = np.array(Vector(detOnTime[1:]) - Vector(detOnTime))
+        HeadwayLead = np.append(Headway, np.nan)
+        HeadwayFoll = np.insert(Headway, 0, np.nan)
+        
+        # compute leading and following gap
+        Gap = np.array(Vector(detOnTime[1:]) - Vector(detOffTime))
+        GapLead = np.append(Gap, np.nan)
+        GapFoll = np.insert(Gap, 0, np.nan)
+        
+        # detOn = tuple((ldf.loc[(ldf.EventID == on) & (ldf.Parameter == det_num)]).Signal)
+        # detOff = tuple((ldf.loc[(ldf.EventID == off) & (ldf.Parameter == det_num)]).Signal)
         
         return {'dof': detOnFirst,
                 'dol': detOffLast,
-                'SSC': [i + j for i, j in zip(detOn, detOff)]}
+                'SSC': [i + j for i, j in zip(detOnSignal, detOffSignal)],
+                'OccTime': OccTime,
+                'HeadwayLead': HeadwayLead,
+                'HeadwayFoll': HeadwayFoll,
+                'GapLead': GapLead,
+                'GapFoll': GapFoll}
     
 # =============================================================================
 # merge events and compute parameters
@@ -157,33 +203,29 @@ def processSignalStatusChange(merge_df, det_num):
 
 def processMergedEvents(phase_dirc):
     
-    phase_dict = processPhaseChanges(phase_dirc)
-    det_dict = processDetectorActuations(phase_dirc)
-
     # check phase parameters
-    StartTime = phase_dict['StartTime']
-    interval = phase_dict['interval']
-    cycle = phase_dict['cycle']
+    pdf = processPhaseChanges(phase_dirc)['pdf']
+    cdf = processPhaseChanges(phase_dirc)['cdf']
+    start_time = processPhaseChanges(phase_dirc)['start_time']
     
     print("Yellows, Reds, Greens:", 
-          len(StartTime['Y']), 
-          len(StartTime['R']), 
-          len(StartTime['G']), "\n")
+          len(start_time['Y']), 
+          len(start_time['R']), 
+          len(start_time['G']), "\n")
     
-    print("Min, max of phase parameters:")
-    print("Cycle length:", min(cycle['len']), max(cycle['len']))
-    print("Yellow time:", min(interval['Y']), max(interval['Y']))
-    print("Red time:", min(interval['R']), max(interval['R']))
-    print("Green time:", min(interval['G']), max(interval['G']), "\n")
+    print("Min, max of cycle parameters:")
+    print("Cycle length:", min(cdf['CycleLength']), max(cdf['CycleLength']))
+    print("Yellow time:", min(cdf['YellowTime']), max(cdf['YellowTime']))
+    print("Red time:", min(cdf['RedTime']), max(cdf['RedTime']))
+    print("Green time:", min(cdf['GreenTime']), max(cdf['GreenTime']), "\n")
     
-    pdf = phase_dict['pdf']
-    ddf = det_dict['ddf']
-    
-    # count lane-by-lane detections
+    # check detector parameters
+    ddf = processDetectorActuations(phase_dirc)['ddf']
+    det_set = processDetectorActuations(phase_dirc)['det_set']
+
+    print("Lane-by-lane detector actuations:")
     print(ddf.Parameter.value_counts(dropna = False).sort_values(), "\n")
     print(ddf.groupby('Parameter').EventID.value_counts(), "\n")
-    
-    det_set = det_dict['det_set']
     
     # merge events data sets
     mdf = pd.concat([pdf, ddf]).sort_values(by = 'TimeStamp')
@@ -191,70 +233,73 @@ def processMergedEvents(phase_dirc):
 
     # add signal category
     mdf['Signal'] = mdf.EventID.map(signal)
+    mdf.Signal.ffill(inplace = True)
     
-    # add phase data
-    phase_cols = {'Cycle': cycle['num'],
-                  'CycleLength': cycle['len'],
-                  'YST': StartTime['Y'][:-1], # current cycle
-                  'YST_NC': StartTime['Y'][1:], # next cycle
-                  'RST': StartTime['R'],
-                  'GST': StartTime['G'],
-                  'RedTime': interval['R'],
-                  'GreenTime': interval['G']}
+    # add cycle number
+    mdf.loc[mdf.EventID == pse['Ys'], 'CycleNum'] = list(range(1, len(start_time['Y'])))
+    mdf.CycleNum.ffill(inplace = True)
     
-    for key, value in phase_cols.items():
-        mdf.loc[mdf.EventID == pse['Ys'], key] = value
-        
-    # forward fill phase columns
-    fill_cols = [col for col in phase_cols.keys()]
-    fill_cols.append('Signal')
+    # left join merged and cycle data frames
+    mdf = mdf.merge(cdf, how = 'left', on = 'CycleNum')
     
-    for col in fill_cols:
-        mdf[col].ffill(inplace = True)
-        
     # phase & detection parameters
-    mdf['AIC'] = (mdf.TimeStamp - mdf.YST).dt.total_seconds() # arrival in cycle
-    mdf['TUY'] = (mdf.YST_NC - mdf.TimeStamp).dt.total_seconds() # time until yellow
-    mdf['TUG'] = (mdf.GST - mdf.TimeStamp).dt.total_seconds() # time until green
-    
+    mdf['AIC'] = round((mdf.TimeStamp - mdf.YST).dt.total_seconds(), 1) # arrival in cycle
+    mdf['TUY'] = round((mdf.YST_NC - mdf.TimeStamp).dt.total_seconds(), 1) # time until yellow
+    mdf['TUG'] = round((mdf.GST - mdf.TimeStamp).dt.total_seconds(), 1) # time until green
+
     # signal status change for each detector
     for det_num in det_set:
-        ssc_folo = processSignalStatusChange(mdf, det_num)
+        ssc_ohg = processSignalStatusChange(mdf, det_num)
         
-        timestamp_limit = (mdf.TimeStamp >= ssc_folo['dof']) & (mdf.TimeStamp <= ssc_folo['dol'])
-        mdf.loc[(mdf.EventID == on) & (mdf.Parameter == det_num) & timestamp_limit, 'SSC'] = ssc_folo['SSC']
+        timestamp_limit = (mdf.TimeStamp >= ssc_ohg['dof']) & (mdf.TimeStamp <= ssc_ohg['dol'])
+        cols = ['SSC', 'OccTime', 'HeadwayLead', 'HeadwayFoll', 'GapLead', 'GapFoll']
+        
+        for col in cols:
+            mdf.loc[(mdf.EventID == on) & (mdf.Parameter == det_num) & timestamp_limit, col] = ssc_ohg[col]
         print("SSC check complete!", "\n")
         
-    # events with detection on
-    mdf.dropna(axis = 0, inplace = True)
-    mdf.drop('EventID', axis = 1, inplace = True)
+    # keep events with detection on
+    mdf = mdf[mdf.EventID == on]
     
+    # drop columns
+    drop_cols = ['EventID', 'Signal', 'CycleLength', 'YellowTime', 'RedTime', 'GreenTime', 'YST', 'RST', 'GST', 'YST_NC']
+    mdf.drop(drop_cols, axis = 1, inplace = True)
+    
+    # drop rows with SSC == Nan
+    mdf.dropna(subset = ['SSC'], axis = 0, inplace = True)
+    
+    # convert parameter to character (for plotting)
     mdf.Parameter = mdf.Parameter.astype(str)
-        
+
     return mdf
 
 mdf_thru = processMergedEvents('thru')
 mdf_left = processMergedEvents('left')
 
+# merged data set for thru + left-turn
 mdf = pd.concat([mdf_thru, mdf_left]).sort_values(by = 'TimeStamp')
 mdf.reset_index(drop = True, inplace = True)
 
-# mdf.to_csv(r"D:\GitHub\match_events\data\20221206_ISR_19Ave\data_SSC.txt", sep = '\t', index = False)
+cdf = processPhaseChanges('thru')['cdf']
+
+# save data sets
+mdf.to_csv(os.path.join("ignore\data", file + "_processed.txt"), sep = '\t', index = False)
+cdf.to_csv(os.path.join("ignore\data", file + "_cycle.txt"), sep = '\t', index = False)
 
 # =============================================================================
 # visualize actuation and signal status change
 # =============================================================================
 
-# actuation ID
-mdf['ID'] = mdf.index + 1000 # adv det IDs start with 1
-mdf.loc[mdf.Det == 'stop', 'ID'] = mdf.ID + 1000 # stop-bar det IDs start with 2
-mdf.loc[mdf.Lane == 'LT', 'ID'] = mdf.ID + 2000 # left-turn det IDs start with 3
+# create ID for each actuation
+mdf['ID'] = mdf.index + 100000 # adv det IDs start with 1
+mdf.loc[mdf.Det == 'stop', 'ID'] = mdf.ID + 100000 # stop-bar det IDs start with 2
+mdf.loc[mdf.Lane == -1, 'ID'] = mdf.ID + 200000 # left-turn det IDs start with 3
 
 # plot detection points for subset
 det_order = [9, 27, 10, 28, 11, 29, 6, 5]
 cat_order = {'SSC': ['YY', 'YR', 'RR', 'RG', 'GG', 'GY', 'GR'],
-             'Parameter': det_order,
-             'Lane': ['R', 'M', 'L', 'LT']}
+             'Parameter': det_order}
+
 ssc_color = {'YY': 'orange',
              'YR': 'brown',
              'RR': 'red',
@@ -268,150 +313,42 @@ def plotActuationSSC(xdf):
         xdf, x = 'TimeStamp', y = 'Parameter',
         color = 'SSC',
         hover_name = 'ID',
-        hover_data = ['AIC', 'TUY'],
+        hover_data = ['AIC', 'TUY', 'TUG', 'OccTime', 'HeadwayLead', 'GapLead'],
         category_orders = cat_order,
         color_discrete_map = ssc_color
     ).update_traces(marker = dict(size = 10))
     
     fig.show()
+    return fig
     
-plotActuationSSC(mdf)
+fig = plotActuationSSC(mdf)
+fig.write_html(os.path.join("output/actuation_html", file + "_processed.html"))
 
 # =============================================================================
 # filter actuation at onset of yellow
 # =============================================================================
 
-# check AIC of actuation with SSC = RG
-temp = mdf.copy(deep = True)
-temp = temp[(temp.Lane != 'LT') & (temp.SSC == 'RG')][['TimeStamp', 'Cycle', 'SSC', 'AIC', 'ID']]
+# threshold parameters
+crit_TUY_adv = 7 # critical TUY at adv det of YLR, RLR actuation over stop-bar det
+crit_AIC_adv = 4 # critical AIC at adv det = length of yellow interval
+crit_AIC_stop = 15 # critical AIC at stop bar detector
 
-# start times
-yellowStart = processPhaseChanges('thru')['StartTime']['Y']
-greenStart = processPhaseChanges('thru')['StartTime']['G']
-
-# # test filter
-# fdf = mdf.copy(deep = True)
-# fdf = fdf[(fdf.AIC <= 15) | (fdf.TUY <= 10)]
-# plotActuationSSC(fdf)
+tdf = mdf.copy(deep = True) # temp data frame
 
 # filter actuation at adv det susceptible to dilemma zone
-tdf = mdf.copy(deep = True)
-
-crit_TUY_adv = 7 # critical TUY at adv det of YLR, RLR actuation over stop-bar det
-crit_AIC_adv = 3.6 # critical AIC at adv det = length of yellow interval
-
 df_crit_adv = tdf[(tdf.Det == 'adv') & ((tdf.TUY <= crit_TUY_adv) | (tdf.AIC <= crit_AIC_adv))]
 id_adv = set(df_crit_adv.ID)
 
 # filter potential set of corresponding matches at stop-bar
-crit_AIC_stop = 15
 df_crit_stop = tdf[(tdf.Det == 'stop') & ((tdf.AIC <= crit_AIC_stop) | (tdf.TUY == 0))]
 id_stop = set(df_crit_stop.ID)
 
 # union set of ids
 id_adv_stop = sorted(set.union(id_adv, id_stop))
 
-# filtered df
+# filtered data frame
 fdf = tdf[(tdf.Lane == -1) | (tdf.ID.isin(id_adv_stop))]
-plotActuationSSC(fdf)
+fdf.to_csv(os.path.join("ignore\data", file + "_filtered.txt"), sep = '\t', index = False)
 
-# =============================================================================
-# match events
-# =============================================================================
-
-# data frames for adv, stop, left-turn
-adf = mdf[mdf.Det == 'adv']
-sdf = mdf[mdf.Det == 'stop']
-ldf = mdf[mdf.Lane == 'LT']
-
-# test
-def traveltime(x, y):
-    adv_on = adf[adf.ID == x].TimeStamp
-    stop_on = sdf[sdf.ID == y].TimeStamp
-    return (Vector(stop_on) - Vector(adv_on)).pop()
-
-tt_stop = [traveltime(1003, 2005),
-           traveltime(1097, 2099),
-           traveltime(1164, 2167),
-           traveltime(1587, 2592),
-           traveltime(1661, 2662),
-           traveltime(1722, 2724),
-           traveltime(1448, 2453),
-           traveltime(1543, 2544),
-           traveltime(1588, 2594)]
-
-tt_run = [traveltime(1161, 2163),
-          traveltime(1225, 2226),
-          traveltime(1585, 2590),
-          traveltime(1162, 2165),
-          traveltime(1584, 2589)]
-
-# speed conversion: mph to fps
-def speedConvert(x):
-    return round(x*5280/3600, 1)
-
-# intersection parameters
-len_stop = 40
-len_adv = 5
-dist_det = 300
-dist_adv_stop = dist_det - len_stop
-
-# speed parameters
-speed_limit = speedConvert(35)
-speed_max = speedConvert(50)
-
-# travel time
-tt_ideal = round(dist_adv_stop / speed_limit, 1)
-tt_min = round(dist_adv_stop / speed_max, 1)
-
-dec = round((speed_limit**2) / (2*dist_det), 1) # v2 = u2 + 2as to find deceleration for stopping
-tt_max = round(speed_limit / dec, 1)
-
-# ideal travel time for stop and run
-tt_ideal_stop = median(tt_stop)
-tt_ideal_run = median(tt_run)
-
-# match events for all actuations over adv det
-match = {}
-for i in sorted(id_adv):
-    adv_on = adf[adf.ID == i].TimeStamp
-    adv_lane = adf[adf.ID == i].Lane.values[0].astype(int)
-    adv_ssc = adf[adf.ID == i].SSC.values[0]
-
-    candidate = {}
-    for j in sorted(id_stop):
-        stop_on = sdf[sdf.ID == j].TimeStamp
-        stop_lane = sdf[sdf.ID == j].Lane.values[0].astype(int)
-        stop_ssc = sdf[sdf.ID == j].SSC.values[0]
-        
-        diff_tt = (Vector(stop_on) - Vector(adv_on)).pop() # travel time from adv to stop-bar
-        diff_lane = abs(stop_lane - adv_lane) # integer value for num of lanes changed
-        
-        if diff_tt < 0 or diff_lane > 1:
-            pass
-        else:
-            if (diff_tt < tt_min or diff_tt > tt_max):
-                pass
-            else:
-                if stop_ssc == 'RG': # if veh stops at stop bar
-                    match_diff = abs(diff_tt - tt_ideal_stop)
-                else: # if veh runs thru stop bar
-                    match_diff = abs(diff_tt - tt_ideal_run)
-                
-                if match_diff == 0: # for zero division error
-                    match_diff = 0.1
-                
-                match_strength = round(1/match_diff, 2)
-                
-                if diff_lane == 0:
-                    change = 0
-                else:
-                    change = 1
-                    
-                candidate[j] = list([match_strength, change])
-    
-    print(i, ":", candidate)
-    
-    if len(candidate) != 0: # check candidate dict is not empty
-        match[i] = candidate
-            
+fig = plotActuationSSC(fdf)
+fig.write_html(os.path.join("output/actuation_html", file + "_filtered.html"))
