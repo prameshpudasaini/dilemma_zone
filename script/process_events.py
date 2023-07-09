@@ -6,8 +6,9 @@ import plotly.express as px
 import plotly.io as pio
 pio.renderers.default = 'browser'
 
-os.chdir(r"D:\GitHub\match_events")
+os.chdir(r"D:\GitHub\dilemma_zone")
 
+# define class to subtract timestamps
 class Vector():
     def __init__(self, data):
         self.data = data
@@ -22,10 +23,11 @@ def getFileName(year, month, day, from_hour, from_min, to_hour, to_min):
            str(from_hour).zfill(2) + str(from_min).zfill(2) + '_' +
            str(to_hour).zfill(2) + str(to_min).zfill(2))
 
-file = getFileName(2023, 3, 27, 14, 15, 18, 45)
-
 # read file, convert timestamp
-df = pd.read_csv(os.path.join("ignore\data", file + '.txt'), sep = '\t')
+file = getFileName(2023, 3, 27, 14, 15, 18, 45)
+path = "ignore\calibration_data"
+
+df = pd.read_csv(os.path.join(path, file + '.txt'), sep = '\t')
 df.TimeStamp = pd.to_datetime(df.TimeStamp, format = '%Y-%m-%d %H:%M:%S.%f').sort_values()
 
 # =============================================================================
@@ -138,12 +140,14 @@ def processDetectorActuations(phase_dirc):
             'det_set': det_set}
 
 # =============================================================================
-# process signal status change and OHG parameters
+# process signal change during actuation and OHG parameters
 # =============================================================================
 
-# signal status change and first on and last off (FOLO) over a detector
-def processSignalStatusChange(xdf, det_num):
-    print("Checking signal status change for detector: ", det_num)
+# signal change during actuation (SCA)
+# first on and last off (FOLO) over a detector
+# computation of parameters: occupancy time, headway, gap
+def processSCA_OHG(xdf, det_num):
+    print("Checking signal change during actuation for detector: ", det_num)
     ldf = xdf.copy(deep = True) # lane-based actuations events df
     ldf = ldf[ldf.Parameter == det_num] # filter for detector number
     
@@ -185,12 +189,9 @@ def processSignalStatusChange(xdf, det_num):
         GapLead = np.append(Gap, np.nan)
         GapFoll = np.insert(Gap, 0, np.nan)
         
-        # detOn = tuple((ldf.loc[(ldf.EventID == on) & (ldf.Parameter == det_num)]).Signal)
-        # detOff = tuple((ldf.loc[(ldf.EventID == off) & (ldf.Parameter == det_num)]).Signal)
-        
         return {'dof': detOnFirst,
                 'dol': detOffLast,
-                'SSC': [i + j for i, j in zip(detOnSignal, detOffSignal)],
+                'SCA': [i + j for i, j in zip(detOnSignal, detOffSignal)],
                 'OccTime': OccTime,
                 'HeadwayLead': HeadwayLead,
                 'HeadwayFoll': HeadwayFoll,
@@ -243,20 +244,20 @@ def processMergedEvents(phase_dirc):
     mdf = mdf.merge(cdf, how = 'left', on = 'CycleNum')
     
     # phase & detection parameters
-    mdf['AIC'] = round((mdf.TimeStamp - mdf.YST).dt.total_seconds(), 1) # arrival in cycle
+    mdf['AIY'] = round((mdf.TimeStamp - mdf.YST).dt.total_seconds(), 1) # arrival in yellow
     mdf['TUY'] = round((mdf.YST_NC - mdf.TimeStamp).dt.total_seconds(), 1) # time until yellow
     mdf['TUG'] = round((mdf.GST - mdf.TimeStamp).dt.total_seconds(), 1) # time until green
 
-    # signal status change for each detector
+    # signal change during actuation for each detector
     for det_num in det_set:
-        ssc_ohg = processSignalStatusChange(mdf, det_num)
+        sca_ohg = processSCA_OHG(mdf, det_num)
         
-        timestamp_limit = (mdf.TimeStamp >= ssc_ohg['dof']) & (mdf.TimeStamp <= ssc_ohg['dol'])
-        cols = ['SSC', 'OccTime', 'HeadwayLead', 'HeadwayFoll', 'GapLead', 'GapFoll']
+        timestamp_limit = (mdf.TimeStamp >= sca_ohg['dof']) & (mdf.TimeStamp <= sca_ohg['dol'])
+        cols = ['SCA', 'OccTime', 'HeadwayLead', 'HeadwayFoll', 'GapLead', 'GapFoll']
         
         for col in cols:
-            mdf.loc[(mdf.EventID == on) & (mdf.Parameter == det_num) & timestamp_limit, col] = ssc_ohg[col]
-        print("SSC check complete!", "\n")
+            mdf.loc[(mdf.EventID == on) & (mdf.Parameter == det_num) & timestamp_limit, col] = sca_ohg[col]
+        print("SCA check complete!", "\n")
         
     # keep events with detection on
     mdf = mdf[mdf.EventID == on]
@@ -265,8 +266,8 @@ def processMergedEvents(phase_dirc):
     drop_cols = ['EventID', 'Signal', 'CycleLength', 'YellowTime', 'RedTime', 'GreenTime', 'YST', 'RST', 'GST', 'YST_NC']
     mdf.drop(drop_cols, axis = 1, inplace = True)
     
-    # drop rows with SSC == Nan
-    mdf.dropna(subset = ['SSC'], axis = 0, inplace = True)
+    # drop rows with SCA == Nan
+    mdf.dropna(subset = ['SCA'], axis = 0, inplace = True)
     
     # convert parameter to character (for plotting)
     mdf.Parameter = mdf.Parameter.astype(str)
@@ -283,11 +284,11 @@ mdf.reset_index(drop = True, inplace = True)
 cdf = processPhaseChanges('thru')['cdf']
 
 # save data sets
-mdf.to_csv(os.path.join("ignore\data", file + "_processed.txt"), sep = '\t', index = False)
-cdf.to_csv(os.path.join("ignore\data", file + "_cycle.txt"), sep = '\t', index = False)
+mdf.to_csv(os.path.join(path, file + "_processed.txt"), sep = '\t', index = False)
+cdf.to_csv(os.path.join(path, file + "_cycle.txt"), sep = '\t', index = False)
 
 # =============================================================================
-# visualize actuation and signal status change
+# visualize actuation with signal change
 # =============================================================================
 
 # create ID for each actuation
@@ -297,10 +298,10 @@ mdf.loc[mdf.Lane == -1, 'ID'] = mdf.ID + 200000 # left-turn det IDs start with 3
 
 # plot detection points for subset
 det_order = [9, 27, 10, 28, 11, 29, 6, 5]
-cat_order = {'SSC': ['YY', 'YR', 'RR', 'RG', 'GG', 'GY', 'GR'],
+cat_order = {'SCA': ['YY', 'YR', 'RR', 'RG', 'GG', 'GY', 'GR'],
              'Parameter': det_order}
 
-ssc_color = {'YY': 'orange',
+sca_color = {'YY': 'orange',
              'YR': 'brown',
              'RR': 'red',
              'RG': 'black',
@@ -308,39 +309,44 @@ ssc_color = {'YY': 'orange',
              'GY': 'limegreen',
              'GR': 'navy'}
 
-def plotActuationSSC(xdf):
+def plotActuationSCA(xdf):
     fig = px.scatter(
         xdf, x = 'TimeStamp', y = 'Parameter',
-        color = 'SSC',
+        color = 'SCA',
         hover_name = 'ID',
-        hover_data = ['AIC', 'TUY', 'TUG', 'OccTime', 'HeadwayLead', 'GapLead'],
+        hover_data = ['AIY', 'TUY', 'TUG', 'OccTime', 'HeadwayLead', 'GapLead'],
         category_orders = cat_order,
-        color_discrete_map = ssc_color
+        color_discrete_map = sca_color
     ).update_traces(marker = dict(size = 10))
     
     fig.show()
     return fig
     
-fig = plotActuationSSC(mdf)
-fig.write_html(os.path.join("output/actuation_html", file + "_processed.html"))
+fig = plotActuationSCA(mdf)
+fig.write_html(os.path.join("ignore/calibration_actuation_html", file + "_processed.html"))
 
 # =============================================================================
 # filter actuation at onset of yellow
 # =============================================================================
 
 # threshold parameters
-crit_TUY_adv = 7 # critical TUY at adv det of YLR, RLR actuation over stop-bar det
-crit_AIC_adv = 4 # critical AIC at adv det = length of yellow interval
-crit_AIC_stop = 15 # critical AIC at stop bar detector
+crit_TUY_adv = 6 # critical TUY at adv det of YLR, RLR actuation over stop-bar det
+crit_AIY_adv = 3.6 # critical AIY at adv det = length of yellow interval
+crit_TUY_stop = 0 # critical TUY at stop bar det
+crit_AIY_stop = 12 # critical AIY at stop bar det
 
 tdf = mdf.copy(deep = True) # temp data frame
 
+# filter out SCA (YG, RY, GR) over stop-bar and adv det
+remove_SCA = ['YG', 'RY', 'GR']
+tdf = tdf.drop(tdf[(tdf.Det.isin(['adv', 'stop'])) & (tdf.SCA.isin(remove_SCA))].index)
+
 # filter actuation at adv det susceptible to dilemma zone
-df_crit_adv = tdf[(tdf.Det == 'adv') & ((tdf.TUY <= crit_TUY_adv) | (tdf.AIC <= crit_AIC_adv))]
+df_crit_adv = tdf[(tdf.Det == 'adv') & ((tdf.TUY <= crit_TUY_adv) | (tdf.AIY <= crit_AIY_adv))]
 id_adv = set(df_crit_adv.ID)
 
 # filter potential set of corresponding matches at stop-bar
-df_crit_stop = tdf[(tdf.Det == 'stop') & ((tdf.AIC <= crit_AIC_stop) | (tdf.TUY == 0))]
+df_crit_stop = tdf[(tdf.Det == 'stop') & ((tdf.TUY == crit_TUY_stop) | (tdf.AIY <= crit_AIY_stop))]
 id_stop = set(df_crit_stop.ID)
 
 # union set of ids
@@ -348,7 +354,7 @@ id_adv_stop = sorted(set.union(id_adv, id_stop))
 
 # filtered data frame
 fdf = tdf[(tdf.Lane == -1) | (tdf.ID.isin(id_adv_stop))]
-fdf.to_csv(os.path.join("ignore\data", file + "_filtered.txt"), sep = '\t', index = False)
+fdf.to_csv(os.path.join(path, file + "_filtered.txt"), sep = '\t', index = False)
 
-fig = plotActuationSSC(fdf)
-fig.write_html(os.path.join("output/actuation_html", file + "_filtered.html"))
+fig = plotActuationSCA(fdf)
+fig.write_html(os.path.join("ignore/calibration_actuation_html", file + "_filtered.html"))
