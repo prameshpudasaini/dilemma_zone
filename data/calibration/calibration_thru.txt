@@ -77,8 +77,8 @@
 6.2	RG	stop
 6.1	RR	go
 6.5	RG	stop
-5.7	YY	go
-7.2	YR	go
+4.5	YY	go
+5.3	YR	go
 5.3	YY	go
 4.7	YR	go
 7.0	RG	stop
@@ -108,7 +108,7 @@
 6.0	YR	go
 4.5	YY	go
 7.8	RG	stop
-4.5	RG	stop
+6.2	RG	stop
 6.6	RG	stop
 8.0	YY	go
 8.4	RG	stop
