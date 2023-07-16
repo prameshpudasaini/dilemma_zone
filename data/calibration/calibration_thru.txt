@@ -1,303 +1,303 @@
-5.8	RG	stop
-5.0	RG	stop
-6.1	YY	go
-4.2	RR	go
-6.5	RG	stop
-3.9	GY	go
-8.2	RG	stop
-7.4	RG	stop
-4.3	YR	go
-6.2	RG	stop
-7.8	RG	stop
-6.3	RG	stop
-8.5	RG	stop
-5.7	RG	stop
-5.2	RG	stop
-3.5	YY	go
-6.8	RG	stop
-5.4	GY	go
-3.9	YY	go
-5.4	RG	stop
-6.2	RG	stop
-5.1	RG	stop
-6.9	RG	stop
-8.6	RG	stop
-6.4	RG	stop
-3.5	YY	go
-5.2	RG	stop
-5.4	RG	stop
-4.0	YY	go
-7.2	RG	stop
-5.6	RG	stop
-5.2	YR	go
-6.6	RG	stop
-5.8	YY	go
-3.8	YR	go
-4.4	YY	go
-7.6	RG	stop
-4.1	YY	go
-4.0	YR	go
-3.6	YR	go
-6.1	RG	stop
-3.7	YY	go
-5.4	YY	go
-5.4	YY	go
-4.2	YR	go
-4.3	YY	go
-4.0	YR	go
-7.8	RG	stop
-4.4	YY	go
-4.0	YY	go
-6.5	RG	stop
-4.7	YY	go
-6.7	RG	stop
-4.6	YY	go
-4.4	YY	go
-6.3	RG	stop
-3.9	YY	go
-4.0	YR	go
-4.2	RR	go
-6.0	RG	stop
-4.4	YY	go
-7.5	RG	stop
-8.8	RG	stop
-7.1	RG	stop
-4.8	YR	go
-4.7	YY	go
-4.7	YR	go
-6.1	RG	stop
-4.4	YY	go
-5.2	RG	stop
-3.8	YY	go
-7.3	RG	stop
-4.6	YY	go
-5.5	RG	stop
-4.6	YR	go
-5.9	RG	stop
-6.2	RG	stop
-6.1	RR	go
-6.5	RG	stop
-4.5	YY	go
-5.3	YR	go
-5.3	YY	go
-4.7	YR	go
-7.0	RG	stop
-4.2	YY	go
-4.5	RR	go
-5.2	YY	go
-4.7	YR	go
-4.8	YY	go
-4.8	RG	stop
-7.5	RG	stop
-6.7	RG	stop
-4.7	YY	go
-7.0	RG	stop
-4.4	YR	go
-4.5	YY	go
-7.2	RG	stop
-5.3	YY	go
-4.9	YY	go
-4.6	YR	go
-7.8	RG	stop
-6.5	RG	stop
-4.6	YY	go
-6.1	RG	stop
-5.4	RG	stop
-4.8	YY	go
-5.2	RG	stop
-6.0	YR	go
-4.5	YY	go
-7.8	RG	stop
-6.2	RG	stop
-6.6	RG	stop
-8.0	YY	go
-8.4	RG	stop
-6.3	YY	go
-6.3	YY	go
-6.0	RR	go
-7.0	RG	stop
-4.7	YY	go
-5.3	RG	stop
-4.5	YY	go
-7.2	RG	stop
-7.4	RG	stop
-3.8	YY	go
-6.2	RG	stop
-3.4	YY	go
-3.5	YY	go
-5.7	RG	stop
-5.0	YY	go
-6.3	RG	stop
-7.9	RG	stop
-6.6	RG	stop
-5.9	YY	go
-5.9	YR	go
-5.6	RG	stop
-6.0	GY	go
-5.8	YR	go
-3.8	YY	go
-4.8	YY	go
-3.9	YY	go
-6.1	YR	go
-7.7	RG	stop
-4.0	YY	go
-4.6	YR	go
-5.4	RG	stop
-4.3	YY	go
-7.7	RG	stop
-3.7	YY	go
-3.8	YY	go
-6.9	RG	stop
-5.1	YY	go
-7.0	RG	stop
-5.5	RG	stop
-7.1	RG	stop
-6.7	RG	stop
-4.2	YR	go
-3.5	YY	go
-5.1	RG	stop
-4.1	YY	go
-7.4	RG	stop
-4.5	YY	go
-4.5	YY	go
-4.4	YR	go
-6.1	RG	stop
-4.4	YY	go
-4.5	YY	go
-5.3	RG	stop
-5.3	YR	go
-6.6	RG	stop
-6.6	RG	stop
-5.3	YY	go
-5.4	YR	go
-6.7	RG	stop
-5.6	YY	go
-5.7	YR	go
-5.9	RG	stop
-6.0	YY	go
-5.1	YY	go
-8.0	RG	stop
-5.8	YY	go
-4.0	YY	go
-10.1	RG	stop
-4.1	YY	go
-4.8	YR	go
-6.2	RG	stop
-4.8	RR	go
-9.3	RG	stop
-4.4	YY	go
-4.3	YR	go
-5.7	RG	stop
-4.4	YY	go
-4.5	YY	go
-4.8	YY	go
-6.0	RG	stop
-4.1	YY	go
-3.2	YY	go
-3.3	YY	go
-3.1	GY	go
-7.0	RG	stop
-4.6	YY	go
-6.3	RG	stop
-4.0	YY	go
-5.8	RG	stop
-5.6	YY	go
-6.8	YY	go
-6.1	RR	go
-6.0	YY	go
-5.8	YR	go
-6.3	RG	stop
-3.8	YR	go
-4.6	YY	go
-7.2	RG	stop
-4.4	YY	go
-4.5	YR	go
-6.4	RG	stop
-5.1	YY	go
-5.0	YY	go
-5.7	RG	stop
-3.8	YR	go
-5.6	RG	stop
-3.3	YY	go
-7.1	RG	stop
-5.0	YY	go
-6.6	RG	stop
-4.2	YY	go
-4.4	RG	stop
-4.6	YY	go
-4.6	YY	go
-5.9	RG	stop
-3.5	YY	go
-5.4	RG	stop
-3.6	YY	go
-6.1	RG	stop
-4.4	YY	go
-5.0	YY	go
-4.8	RG	stop
-5.1	RG	stop
-4.6	RG	stop
-7.0	RG	stop
-8.7	RG	stop
-6.4	RG	stop
-3.8	YY	go
-5.7	RG	stop
-3.5	YR	go
-5.0	RG	stop
-3.9	YY	go
-4.0	YR	go
-7.4	RG	stop
-7.8	RG	stop
-4.9	YY	go
-4.8	YY	go
-5.7	RG	stop
-4.5	YR	go
-7.4	RG	stop
-4.5	YY	go
-6.2	RG	stop
-7.2	RG	stop
-6.4	RG	stop
-5.5	RG	stop
-6.9	RG	stop
-3.9	YY	go
-5.9	RG	stop
-5.8	RG	stop
-6.6	RG	stop
-6.5	YY	go
-8.6	RG	stop
-6.7	RG	stop
-5.7	RG	stop
-6.5	YY	go
-3.8	RR	go
-5.9	RG	stop
-5.5	YY	go
-7.2	RG	stop
-5.0	YR	go
-7.9	RG	stop
-4.2	YY	go
-4.1	RR	go
-6.3	RG	stop
-4.0	YY	go
-6.3	RG	stop
-5.3	RG	stop
-3.3	YY	go
-5.9	RG	stop
-3.8	YY	go
-6.1	RG	stop
-5.8	YY	go
-8.1	RG	stop
-4.5	YY	go
-3.9	RR	go
-6.5	RG	stop
-4.0	YY	go
-4.5	YR	go
-8.0	RG	stop
-4.9	YY	go
-6.4	RG	stop
-6.6	RG	stop
-4.0	YY	go
-7.8	RG	stop
-9.0	RG	stop
-8.5	RG	stop
-6.0	RG	stop
-7.6	RG	stop
-6.5	RG	stop
+5.8	RG	stop	F
+5.0	RG	stop	F
+6.1	YY	go	F
+4.2	RR	go	F
+6.5	RG	stop	F
+3.9	GY	go	F
+8.2	RG	stop	F
+7.4	RG	stop	F
+4.3	YR	go	F
+6.2	RG	stop	T
+7.8	RG	stop	F
+6.3	RG	stop	F
+8.5	RG	stop	F
+5.7	RG	stop	F
+5.2	RG	stop	F
+3.5	YY	go	F
+6.8	RG	stop	F
+5.4	GY	go	F
+3.9	YY	go	F
+5.4	RG	stop	T
+6.2	RG	stop	F
+5.1	RG	stop	F
+6.9	RG	stop	F
+8.6	RG	stop	F
+6.4	RG	stop	F
+3.5	YY	go	F
+5.2	RG	stop	F
+5.4	RG	stop	F
+4.0	YY	go	F
+7.2	RG	stop	F
+5.6	RG	stop	F
+5.2	YR	go	F
+6.6	RG	stop	F
+5.8	YY	go	F
+3.8	YR	go	F
+4.4	YY	go	F
+7.6	RG	stop	F
+4.1	YY	go	F
+4.0	YR	go	F
+3.6	YR	go	F
+6.1	RG	stop	F
+3.7	YY	go	F
+5.4	YY	go	F
+5.4	YY	go	F
+4.2	YR	go	F
+4.3	YY	go	F
+4.0	YR	go	T
+7.8	RG	stop	F
+4.4	YY	go	F
+4.0	YY	go	F
+6.5	RG	stop	F
+4.7	YY	go	F
+6.7	RG	stop	F
+4.6	YY	go	T
+4.4	YY	go	T
+6.3	RG	stop	T
+3.9	YY	go	T
+4.0	YR	go	F
+4.2	RR	go	T
+6.0	RG	stop	F
+4.4	YY	go	F
+7.5	RG	stop	F
+8.8	RG	stop	F
+7.1	RG	stop	F
+4.8	YR	go	F
+4.7	YY	go	F
+4.7	YR	go	T
+6.1	RG	stop	F
+4.4	YY	go	F
+5.2	RG	stop	F
+3.8	YY	go	T
+7.3	RG	stop	F
+4.6	YY	go	T
+5.5	RG	stop	F
+4.6	YR	go	F
+5.9	RG	stop	F
+6.2	RG	stop	T
+6.1	RR	go	F
+6.5	RG	stop	F
+4.5	YY	go	T
+5.3	YR	go	F
+5.3	YY	go	F
+4.7	YR	go	F
+7.0	RG	stop	F
+4.2	YY	go	F
+4.5	RR	go	F
+5.2	YY	go	F
+4.7	YR	go	F
+4.8	YY	go	F
+4.8	RG	stop	F
+7.5	RG	stop	F
+6.7	RG	stop	F
+4.7	YY	go	F
+7.0	RG	stop	F
+4.4	YR	go	T
+4.5	YY	go	T
+7.2	RG	stop	F
+5.3	YY	go	T
+4.9	YY	go	T
+4.6	YR	go	T
+7.8	RG	stop	F
+6.5	RG	stop	F
+4.6	YY	go	F
+6.1	RG	stop	F
+5.4	RG	stop	F
+4.8	YY	go	F
+5.2	RG	stop	F
+6.0	YR	go	F
+4.5	YY	go	F
+7.8	RG	stop	F
+6.2	RG	stop	F
+6.6	RG	stop	F
+8.0	YY	go	T
+8.4	RG	stop	T
+6.3	YY	go	F
+6.3	YY	go	T
+6.0	RR	go	F
+7.0	RG	stop	F
+4.7	YY	go	F
+5.3	RG	stop	F
+4.5	YY	go	F
+7.2	RG	stop	F
+7.4	RG	stop	F
+3.8	YY	go	F
+6.2	RG	stop	F
+3.4	YY	go	F
+3.5	YY	go	F
+5.7	RG	stop	F
+5.0	YY	go	F
+6.3	RG	stop	F
+7.9	RG	stop	F
+6.6	RG	stop	F
+5.9	YY	go	F
+5.9	YR	go	T
+5.6	RG	stop	F
+6.0	GY	go	F
+5.8	YR	go	F
+3.8	YY	go	F
+4.8	YY	go	F
+3.9	YY	go	F
+6.1	YR	go	F
+7.7	RG	stop	F
+4.0	YY	go	F
+4.6	YR	go	T
+5.4	RG	stop	T
+4.3	YY	go	F
+7.7	RG	stop	F
+3.7	YY	go	T
+3.8	YY	go	F
+6.9	RG	stop	F
+5.1	YY	go	F
+7.0	RG	stop	F
+5.5	RG	stop	F
+7.1	RG	stop	F
+6.7	RG	stop	F
+4.2	YR	go	F
+3.5	YY	go	F
+5.1	RG	stop	F
+4.1	YY	go	F
+7.4	RG	stop	F
+4.5	YY	go	F
+4.5	YY	go	T
+4.4	YR	go	T
+6.1	RG	stop	T
+4.4	YY	go	T
+4.5	YY	go	T
+5.3	RG	stop	F
+5.3	YR	go	F
+6.6	RG	stop	F
+6.6	RG	stop	F
+5.3	YY	go	T
+5.4	YR	go	F
+6.7	RG	stop	T
+5.6	YY	go	F
+5.7	YR	go	T
+5.9	RG	stop	F
+6.0	YY	go	T
+5.1	YY	go	F
+8.0	RG	stop	T
+5.8	YY	go	T
+4.0	YY	go	T
+10.1	RG	stop	T
+4.1	YY	go	F
+4.8	YR	go	T
+6.2	RG	stop	F
+4.8	RR	go	F
+9.3	RG	stop	T
+4.4	YY	go	F
+4.3	YR	go	T
+5.7	RG	stop	T
+4.4	YY	go	F
+4.5	YY	go	T
+4.8	YY	go	T
+6.0	RG	stop	F
+4.1	YY	go	T
+3.2	YY	go	F
+3.3	YY	go	F
+3.1	GY	go	F
+7.0	RG	stop	F
+4.6	YY	go	T
+6.3	RG	stop	F
+4.0	YY	go	F
+5.8	RG	stop	F
+5.6	YY	go	F
+6.8	YY	go	F
+6.1	RR	go	F
+6.0	YY	go	T
+5.8	YR	go	F
+6.3	RG	stop	T
+3.8	YR	go	F
+4.6	YY	go	F
+7.2	RG	stop	F
+4.4	YY	go	F
+4.5	YR	go	T
+6.4	RG	stop	F
+5.1	YY	go	F
+5.0	YY	go	T
+5.7	RG	stop	T
+3.8	YR	go	F
+5.6	RG	stop	F
+3.3	YY	go	F
+7.1	RG	stop	F
+5.0	YY	go	T
+6.6	RG	stop	F
+4.2	YY	go	F
+4.4	RG	stop	T
+4.6	YY	go	F
+4.6	YY	go	T
+5.9	RG	stop	F
+3.5	YY	go	T
+5.4	RG	stop	F
+3.6	YY	go	F
+6.1	RG	stop	F
+4.4	YY	go	F
+5.0	YY	go	F
+4.8	RG	stop	F
+5.1	RG	stop	F
+4.6	RG	stop	F
+7.0	RG	stop	F
+8.7	RG	stop	F
+6.4	RG	stop	F
+3.8	YY	go	F
+5.7	RG	stop	F
+3.5	YR	go	F
+5.0	RG	stop	F
+3.9	YY	go	F
+4.0	YR	go	F
+7.4	RG	stop	F
+7.8	RG	stop	F
+4.9	YY	go	F
+4.8	YY	go	F
+5.7	RG	stop	T
+4.5	YR	go	F
+7.4	RG	stop	F
+4.5	YY	go	F
+6.2	RG	stop	T
+7.2	RG	stop	F
+6.4	RG	stop	F
+5.5	RG	stop	F
+6.9	RG	stop	F
+3.9	YY	go	F
+5.9	RG	stop	F
+5.8	RG	stop	F
+6.6	RG	stop	F
+6.5	YY	go	F
+8.6	RG	stop	F
+6.7	RG	stop	F
+5.7	RG	stop	F
+6.5	YY	go	F
+3.8	RR	go	F
+5.9	RG	stop	F
+5.5	YY	go	F
+7.2	RG	stop	F
+5.0	YR	go	F
+7.9	RG	stop	F
+4.2	YY	go	T
+4.1	RR	go	F
+6.3	RG	stop	T
+4.0	YY	go	F
+6.3	RG	stop	F
+5.3	RG	stop	F
+3.3	YY	go	F
+5.9	RG	stop	F
+3.8	YY	go	F
+6.1	RG	stop	F
+5.8	YY	go	F
+8.1	RG	stop	T
+4.5	YY	go	F
+3.9	RR	go	F
+6.5	RG	stop	F
+4.0	YY	go	T
+4.5	YR	go	F
+8.0	RG	stop	F
+4.9	YY	go	F
+6.4	RG	stop	F
+6.6	RG	stop	F
+4.0	YY	go	F
+7.8	RG	stop	F
+9.0	RG	stop	F
+8.5	RG	stop	F
+6.0	RG	stop	F
+7.6	RG	stop	F
+6.5	RG	stop	F

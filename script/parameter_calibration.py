@@ -105,10 +105,18 @@ for key, value in thru_result.items():
         travel_time.append(diff)
         
         SCA = xdf[xdf.ID == inner_key].SCA.values[0] # signal change at stop-bar
-        if SCA == 'RG': # stopping vehicle            
-            file_thru.write(str(diff)+"\t"+SCA+"\t"+"stop"+"\n")
+        if SCA == 'RG': # stopping vehicle
+            decision = 'stop'
         else:
-            file_thru.write(str(diff)+"\t"+SCA+"\t"+"go"+"\n")
+            decision = 'go'
+        
+        adv_gap_foll = xdf[xdf.ID == inner_value].GapFoll.values[0]
+        if adv_gap_foll <= 1.5:
+            car_follow = 'T'
+        else:
+            car_follow = 'F'
+            
+        file_thru.write(str(diff)+"\t"+SCA+"\t"+decision+"\t"+car_follow+"\n")
             
     i += 1
 file_thru.close()

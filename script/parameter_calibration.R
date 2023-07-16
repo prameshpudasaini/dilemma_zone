@@ -45,6 +45,7 @@ round(mean(data_left), 1) # parameter for left
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 DT <- fread("data/calibration/calibration_thru.txt")
+
 DT_stop <- DT[V3 == 'stop']
 DT_go <- DT[V3 == 'go']
 
@@ -65,7 +66,7 @@ round(mean(data_stop), 1) # parameter for stop
 round(mean(data_go), 1) # parameter for go
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# t-test for comparing means of stop and go
+# t-test for comparing means
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ggplot(DT_stop, aes(V1)) + geom_histogram()
@@ -74,9 +75,6 @@ ggplot(DT_go, aes(V1)) + geom_histogram()
 # normality test
 shapiro.test(data_stop)
 shapiro.test(data_go)
-
-shapiro.test(log(data_stop))
-shapiro.test(log(data_go))
 
 # At the level 0.05 test, the p-value is greater, implying that there is evidence to
 # believe that the distribution of the data is not significantly different from the
@@ -98,3 +96,22 @@ shapiro.test(data_rlr)
 t.test(data_ylr, data_rlr)
 t.test(log(data_ylr), log(data_rlr))
 wilcox.test(data_ylr, data_rlr)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# t-test for comparing means of car-following
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+data_follow_T <- c(DT[V4 == 'T']$V1)
+data_follow_F <- c(DT[V4 == 'F']$V1)
+
+summary(data_follow_T)
+getConfidenceInterval(data_follow_T, 0.05)
+
+summary(data_follow_F)
+getConfidenceInterval(data_follow_F, 0.05)
+
+shapiro.test(data_follow_T)
+shapiro.test(data_follow_F)
+
+t.test(data_follow_T, data_follow_F)
+wilcox.test(data_follow_T, data_follow_F)
