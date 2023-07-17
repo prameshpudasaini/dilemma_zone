@@ -51,11 +51,13 @@ DT_go <- DT[V3 == 'go']
 
 data_stop <- c(DT_stop$V1)
 summary(data_stop)
+quantile(data_stop, probs = seq(0, 1, 0.05))
 getConfidenceInterval(data_stop, 0.05)
 getConfidenceInterval(data_stop, 0.01)
 
 data_go <- c(DT_go$V1)
 summary(data_go)
+quantile(data_go, probs = seq(0, 1, 0.05))
 getConfidenceInterval(data_go, 0.05)
 getConfidenceInterval(data_go, 0.01)
 
