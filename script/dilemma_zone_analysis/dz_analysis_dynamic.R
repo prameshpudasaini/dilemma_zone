@@ -177,6 +177,9 @@ boundary_levels <- c('Start', 'End')
 sdf[, zone := factor(zone, levels = zone_levels)]
 sdf[, boundary := factor(boundary, levels = boundary_levels)]
 
+# update Type II travel-time based for mph to ft/s conversion
+sdf[zone == 'DZ2_TT', value := value * 5280/3600]
+
 dx_max <- max(sdf$value, na.rm = TRUE)
 
 plot2 <- ggplot(sdf, aes(hour, value, group = interaction(zone, boundary), 
@@ -213,7 +216,7 @@ plot2 <- ggplot(sdf, aes(hour, value, group = interaction(zone, boundary),
     guides(color = guide_legend(override.aes = list(shape = NA, linewidth = 2)))
 plot2
 
-ggsave("output/dz_analysis/DZ_boundary_TOD_weekend.png",
+ggsave("output/dz_analysis/DZ_boundary_TOD_weekend_updated.png",
        plot = plot2,
        units = "cm",
        width = 29.7,
@@ -239,8 +242,8 @@ df3[zone == 'option', doz_start := round(mean(Xc), 0), by = as.factor(velocity)]
 df3[zone == 'option', doz_end := round(mean(Xs), 0), by = as.factor(velocity)]
 
 # type II dilemma zone: travel time based
-df3[, ddz2_tt_start := round(5.5*velocity, 0)]
-df3[, ddz2_tt_end := round(2.5 * velocity, 0)]
+df3[, ddz2_tt_start := round(5.5*velocity*5280/3600, 0)]
+df3[, ddz2_tt_end := round(2.5 * velocity*5280/3600, 0)]
 
 # # type II dilemma zone: probabilistic
 # speed_cuts <- seq(15, 60, 5)
@@ -314,12 +317,12 @@ plot4 <- ggplot(df3) +
          shape = 'Actual decision taken:') + 
     annotate('rect', xmin = stop10, xmax = stop90, ymin = speed_min, ymax = speed_max,
              fill = 'blue', alpha = 0.1) + 
-    annotate('text', x = 490, y = 20, label = 'Type II (probabilistic)', size = 5, fontface = 'bold') + 
-    annotate('text', x = 75, y = 20, label = 'Type II (travel time-based)', size = 5, fontface = 'bold') + 
-    annotate('text', x = 165, y = 26, label = 'Option', size = 5, fontface = 'bold') + 
+    annotate('text', x = 490, y = 42, label = 'Type II (probabilistic)', size = 5, fontface = 'bold') + 
+    annotate('text', x = 95, y = 15, label = 'Type II (travel time-based)', size = 5, fontface = 'bold') + 
+    annotate('text', x = 145, y = 26.5, label = 'Option', size = 5, fontface = 'bold') + 
     annotate('text', x = 350, y = 60.5, label = 'Type I', size = 5, fontface = 'bold') + 
-    geom_segment(aes(x = 430, y = 20, xend = 390, yend = 18), arrow = arrow(length = unit(0.5, 'cm'))) + 
-    geom_segment(aes(x = 75, y = 21, xend = 100, yend = 27), arrow = arrow(length = unit(0.5, 'cm'))) + 
+    # geom_segment(aes(x = 430, y = 43, xend = 390, yend = 41), arrow = arrow(length = unit(0.4, 'cm'))) + 
+    # geom_segment(aes(x = 75, y = 21, xend = 100, yend = 27), arrow = arrow(length = unit(0.4, 'cm'))) + 
     theme_minimal() + 
     theme(axis.text = element_text(size = 14),
           axis.title = element_text(size = 16, face = 'bold'),
@@ -336,7 +339,7 @@ plot4 <- ggplot(df3) +
            color = guide_legend(override.aes = list(size = 5, alpha = 1)))
 plot4
 
-ggsave("output/dz_analysis/DZ_boundary_velocity.png",
+ggsave("output/dz_analysis/DZ_boundary_velocity_updated.png",
        plot = plot4,
        units = "cm",
        width = 29.7,
